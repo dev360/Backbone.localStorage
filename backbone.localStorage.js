@@ -64,9 +64,11 @@ _.extend(Store.prototype, {
 
 });
 
+Backbone.originalSync = Backbone.sync;
+
 // Override `Backbone.sync` to use delegate to the model or collection's
 // *localStorage* property, which should be an instance of `Store`.
-Backbone.sync = function(method, model, options, error) {
+Backbone.localStorageSync = function(method, model, options, error) {
 
   // Backwards compatibility with Backbone <= 0.3.3
   if (typeof options == 'function') {
@@ -92,3 +94,22 @@ Backbone.sync = function(method, model, options, error) {
     options.error("Record not found");
   }
 };
+
+Backbone.sync = function(method, model, options, error) {
+
+  //
+  // Use localStorage if it is defined, otherwise fall
+  // back to the standard backbone sync.
+  //
+  if(typeof(model.localStorage) !== 'undefined' || 
+      (typeof(model.collection) !== 'undefined' && typeof(model.collection.localStorage) !== 'undefined'))
+  {
+     return Backbone.localStorageSync(method, model, success, error);
+  }
+  else
+  {
+    return Backbone.originalSync(method, model, success, error);
+  }  
+};
+
+
